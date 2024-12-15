@@ -1,20 +1,21 @@
-# Trackify
-tracks your daily spotify data
+# Trackify  
+Tracks your daily Spotify data and provides insightful stats about your listening habits.  
 
-#upDate1 15/12/2024
-  Functioning website 
-  gotta make some chnages on the front end side
-  issues cause of logo (is not transparent)'
-  looking for a few more changes mainly:
-  1. Currently playing section has to have a poppy display, it should match prominent colours of the cover art
-  2. Daily minutes tracker has to be added updates on a daily basis (obvs)
-  3. Real Time Friend activity can be added (not necessary)
+<img src="./trackify.png" alt="Trackify Banner" width="200px">
 
+## Features  
+- **Currently Playing Section:**  
+  Displays your currently playing track with a vibrant design that matches the prominent colors of the cover art.  
 
+- **Daily Minutes Tracker:**  
+  Tracks and updates the total minutes you listen to music daily.  
 
+- **Friend Activity (Optional):**  
+  View your friends' listening activity in real-time.  
 
+- **Future Additions:**  
+  - YouTube Music stats integration.  
+  - Google Login functionality.  
 
-
-#Addition
-  1. Add youtube music stats
-  2. add google login
+## Live Demo  
+Check out the live version here: [Trackify](https://add2207.github.io/Trackify).  
