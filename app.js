@@ -5,7 +5,7 @@ const axios = require('axios');
 const SpotifyWebApi = require('spotify-web-api-node');
 
 const CLIENT_ID = '26c78bd719744c07afb6233ec0d26c02';
-const REDIRECT_URI = 'http://localhost:4000/';
+const REDIRECT_URI = 'https://add2207.github.io/Trackify/'; // Update this to your GitHub Pages URL
 const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read`;
 const spotifyApi = new SpotifyWebApi({
     clientId: CLIENT_ID,
@@ -42,6 +42,8 @@ app.get('/playback-data', async (req, res) => {
     }
 });
 
-app.listen(4000, () => {
-    console.log('Server running on http://localhost:4000');
+// Use process.env.PORT if it's set (GitHub Pages environment variable)
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
