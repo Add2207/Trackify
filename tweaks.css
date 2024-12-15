@@ -1,0 +1,63 @@
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #121212;
+    color: #1DB954; /* Changed text color to green */
+    text-align: center;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #1DB954; /* Spotify green */
+    border: none;
+    color: rgb(15, 15, 15);
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1AA34A;
+}
+
+#greeting {
+    border: 2px solid #1DB954;
+    transition: all 0.3s ease-in-out;
+    display: none;
+}
+
+#greeting:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+#currently-playing {
+    transition: all 0.3s ease-in-out;
+    padding: 20px; /* Increased padding for better spacing */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+#currently-playing .cover-art {
+    width: 60px;
+    height: 60px;
+    border-radius: 5px;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+#currently-playing h2 {
+    font-weight: bold;
+    font-size: 1.8rem;
+}
+
+.track {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #1a1717;
+    border-radius: 5px;
+}
+
+#stats, #minutes {
+    margin-top: 20px;
+}
+
+#stats .track, #minutes .minutes {
+    margin-top: 20px;
+}
