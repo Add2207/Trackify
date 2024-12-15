@@ -9,8 +9,8 @@ const minutesSection = document.getElementById('minutes');
 const minutesContainer = document.querySelector('.minutes-container');
 
 const CLIENT_ID = '26c78bd719744c07afb6233ec0d26c02';
-const REDIRECT_URI = 'http://localhost:4000/';
-const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read user-read-recently-played user-read-playback-state user-read-currently-playing`;
+const REDIRECT_URI = 'https://add2207.github.io/Trackify/';
+const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read user-read-recently-played user-read-playback-state user-read-currently-playing user-follow-read`;
 
 spotifyLoginBtn.addEventListener('click', () => {
     window.location.href = AUTH_URL;
