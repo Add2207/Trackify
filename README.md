@@ -15,7 +15,9 @@ Tracks your daily Spotify data and provides insightful stats about your listenin
 
 - **Future Additions:**  
   - YouTube Music stats integration.  
-  - Google Login functionality.  
+  - Google Login functionality.
+  - Secure authentication practices, hiding tokens etc
+  
 
 ## Live Demo  
 Check out the live version here: [Trackify](https://add2207.github.io/Trackify).  
