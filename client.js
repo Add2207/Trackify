@@ -124,6 +124,6 @@ if (accessToken) {
     fetchStats(accessToken);
     fetchMinutes(accessToken);
     fetchCurrentlyPlaying(accessToken);
-    setInterval(() => fetchCurrentlyPlaying(accessToken), 1000);
+    setInterval(() => fetchCurrentlyPlaying(accessToken), 10000);
     spotifyApi.getMe().then(user => displayGreeting(user.display_name));
 }
