@@ -9,21 +9,35 @@ const minutesSection = document.getElementById('minutes');
 const minutesContainer = document.querySelector('.minutes-container');
 
 const CLIENT_ID = '26c78bd719744c07afb6233ec0d26c02';
-const REDIRECT_URI = 'http://localhost:4000/';
-const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read user-read-recently-played user-read-playback-state user-read-currently-playing user-follow-read`;
+const REDIRECT_URI = 'https://add2207.github.io/Trackify/';
+const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}
+&response_type=token
+&redirect_uri=${encodeURIComponent(REDIRECT_URI)}
+&scope=user-top-read user-library-read user-read-recently-played user-read-playback-state user-read-currently-playing user-follow-read
+&show_dialog=true`; // Ensures login prompt always appears
 
+// Event listener for login button
 spotifyLoginBtn.addEventListener('click', () => {
     window.location.href = AUTH_URL;
 });
 
+// Function to get and store access token
 function getAccessToken() {
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
-    return params.get('access_token');
+    let token = params.get('access_token');
+
+    if (token) {
+        localStorage.setItem('spotify_access_token', token); // Store token
+        window.history.replaceState({}, document.title, "/Trackify/"); // Remove token from URL
+    } else {
+        token = localStorage.getItem('spotify_access_token'); // Retrieve token if available
+    }
+
+    return token;
 }
 
-
-
+// Display greeting based on time of day
 function displayGreeting(username) {
     const hours = new Date().getHours();
     let greeting = 'Morning';
@@ -36,6 +50,7 @@ function displayGreeting(username) {
     spotifyLoginBtn.style.display = 'none';
 }
 
+// Fetch user listening stats
 async function fetchStats(accessToken) {
     spotifyApi.setAccessToken(accessToken);
 
@@ -60,13 +75,14 @@ async function fetchStats(accessToken) {
     }
 }
 
-async function fetchMinutes(accessToken){
+// Fetch total listening minutes
+async function fetchMinutes(accessToken) {
     spotifyApi.setAccessToken(accessToken);
 
     try {
-        const response = await spotifyApi.getMyRecentlyPlayedTracks({limit:50});
+        const response = await spotifyApi.getMyRecentlyPlayedTracks({ limit: 50 });
         const lastPlayedSong = response.items[0];
-        const totalMinutes = response.items.reduce((sum,item) => sum + item.track.duration_ms/60000, 0);
+        const totalMinutes = response.items.reduce((sum, item) => sum + item.track.duration_ms / 60000, 0);
 
         minutesContainer.innerHTML = '';
         const minutesElement = document.createElement('div');
@@ -80,11 +96,12 @@ async function fetchMinutes(accessToken){
 
         minutesSection.style.display = 'block';
     } catch (error) {
-        console.error('error fetching minutes:', error);
+        console.error('Error fetching minutes:', error);
         alert('Failed to fetch minutes listened. Please try again.');
     }
 }
 
+// Fetch currently playing track
 async function fetchCurrentlyPlaying(accessToken) {
     spotifyApi.setAccessToken(accessToken);
 
@@ -112,146 +129,33 @@ async function fetchCurrentlyPlaying(accessToken) {
                 </div>
             </div>
         `;
-        
-        fetchFriendActivity(accessToken);
+
     } catch (error) {
         console.error('Error fetching current playback state:', error);
         alert('Failed to fetch playback state. Please try again.');
     }
 }
 
-async function fetchFriendActivity(accessToken) {
+// Retrieve stored access token
+const accessToken = getAccessToken();
+
+if (accessToken) {
     spotifyApi.setAccessToken(accessToken);
 
-    try {
-        const friendsResponse = await spotifyApi.getFollowedArtists({ limit: 50 });
-        const friends = friendsResponse.body.artists.items;
-
-        friendsActivityContainer.innerHTML = ''; // Clear previous data
-
-        for (const friend of friends) {
-            const friendPlaybackResponse = await spotifyApi.getMyCurrentPlaybackState({ user_id: friend.id });
-
-            if (!friendPlaybackResponse || !friendPlaybackResponse.is_playing || !friendPlaybackResponse.item) {
-                continue;
-            }
-
-            const track = friendPlaybackResponse.item;
-            const progressMs = friendPlaybackResponse.progress_ms;
-            const formattedProgress = formatProgress(progressMs, track.duration_ms);
-
-            const friendActivityElement = document.createElement('div');
-            friendActivityElement.classList.add('friend-activity');
-            friendActivityElement.innerHTML = `
-                <img src="${track.album.images[0].url}" alt="${track.name} cover art" class="cover-art">
-                <p><strong>${friend.name}</strong> is playing <strong>${track.name}</strong> by ${track.artists.map(artist => artist.name).join(', ')}</p>
-                <p>🎧 Playing for: ${formattedProgress} / ${(track.duration_ms / 60000).toFixed(0)} minutes</p>
-            `;
-            friendsActivityContainer.appendChild(friendActivityElement);
-        }
-    } catch (error) {
-        console.error('Error fetching friend activity:', error);
-    }
-}
-
-function init() {
-    const accessToken = getAccessToken();
-
-    if (accessToken) {
-        fetchCurrentlyPlaying(accessToken);
-        fetchStats(accessToken);
-        fetchMinutes(accessToken);
-        spotifyApi.getMe().then(user => displayGreeting(user.display_name));
-    }
-}
-
-window.addEventListener('load', init);
-
-/*
-// Spotify API initialization
-const spotifyApi = new SpotifyWebApi();
-const token = 'YOUR_SPOTIFY_ACCESS_TOKEN'; // Replace with your actual token
-
-spotifyApi.setAccessToken(token);
-
-function updateCurrentlyPlaying() {
-    spotifyApi.getMyCurrentPlayingTrack()
-        .then(response => {
-            if (response && response.item) {
-                const track = response.item;
-                const albumArtUrl = track.album.images[0].url;
-
-                // Update cover art
-                document.getElementById('cover-art').src = albumArtUrl;
-
-                // Update the main title and duration
-                document.getElementById('track-title').textContent = `${track.name} by ${track.artists.map(artist => artist.name).join(', ')}`;
-                document.getElementById('track-duration').textContent = `Playing for: ${response.progress_ms / 60000} / ${track.duration_ms / 60000} minutes`;
-
-                // Get the prominent color from the album image to set the background gradient
-                fetch(albumArtUrl)
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const reader = new FileReader();
-                        reader.onloadend = function () {
-                            const img = new Image();
-                            img.src = reader.result;
-                            img.onload = function () {
-                                const canvas = document.createElement('canvas');
-                                const context = canvas.getContext('2d');
-                                canvas.width = 10;
-                                canvas.height = 10;
-
-                                context.drawImage(img, 0, 0, 10, 10);
-                                const imageData = context.getImageData(0, 0, 10, 10).data;
-
-                                // Find the prominent color
-                                const prominentColor = findProminentColor(imageData);
-
-                                // Apply gradient to the currently-playing section based on prominent color
-                                document.getElementById('currently-playing').style.background = `linear-gradient(135deg, ${prominentColor} 0%, ${prominentColor} 100%)`;
-                            };
-                        };
-                        reader.readAsDataURL(blob);
-                    })
-                    .catch(error => console.error('Error loading image for color analysis:', error));
-            }
+    spotifyApi.getMe()
+        .then(user => {
+            displayGreeting(user.display_name);
+            fetchStats(accessToken);
+            fetchMinutes(accessToken);
+            fetchCurrentlyPlaying(accessToken);
+            setInterval(() => fetchCurrentlyPlaying(accessToken), 10000);
         })
-        .catch(error => console.error('Error fetching current playing track:', error));
+        .catch(error => {
+            console.error("Error fetching user data:", error);
+            alert("Session expired. Please log in again.");
+            localStorage.removeItem('spotify_access_token'); // Clear token on error
+            window.location.href = '/Trackify/'; // Redirect to login
+        });
+} else {
+    console.log("No access token found, please log in.");
 }
-
-// Simple algorithm to find the most prominent color from an image's data
-function findProminentColor(imageData) {
-    const length = imageData.length / 4;
-    const rgbValues = {};
-
-    for (let i = 0; i < length; i++) {
-        const r = imageData[i * 4 + 0];
-        const g = imageData[i * 4 + 1];
-        const b = imageData[i * 4 + 2];
-
-        const rgbString = `rgb(${r},${g},${b})`;
-
-        if (rgbValues[rgbString]) {
-            rgbValues[rgbString]++;
-        } else {
-            rgbValues[rgbString] = 1;
-        }
-    }
-
-    let maxValue = 0;
-    let dominantColor = '';
-
-    for (const color in rgbValues) {
-        if (rgbValues[color] > maxValue) {
-            maxValue = rgbValues[color];
-            dominantColor = color;
-        }
-    }
-
-    return dominantColor;
-}
-
-// Call the function to update the "Currently Playing" section
-updateCurrentlyPlaying();
-*/
