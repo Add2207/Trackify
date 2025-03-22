@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/spotify-web-api-js"></script>
 </head>
-<body class="bg-dark text-green">
+<body class="bg-dark text-green" >
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-black">
         <div class="container-fluid">
@@ -25,73 +25,77 @@
             </button>
         </div>
     </nav>
-
-    <!-- Main Content -->
-    <div class="container mt-5 text-center">
-        <h1 class="display-4">Trackify</h1>
-        <button id="spotify-login" class="btn btn-success mt-3">Login with Spotify</button>
-    </div>
-
-    <!-- Greeting Section -->
-    <div id="greeting" class="container mt-5 p-4 text-green rounded shadow-lg" style="background: linear-gradient(135deg, #1DB954, #191414); display: none;">
-        <h2 class="text-center mb-4" style="font-weight: bold; font-size: 1.8rem;">🎵 Good <span id="greeting-time"></span>, <span id="username"></span>!</h2>
-    </div>
-
-    <!-- Currently Playing Section -->
-    <div id="currently-playing" class="container mt-5 p-4 text-green rounded shadow-lg" style="background: linear-gradient(135deg, #1DB954, #191414); padding: 20px; box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);">
-        <h2 class="text-center mb-4" style="font-weight: bold; font-size: 1.8rem;">🎵 Currently Playing</h2>
-        <!-- Dynamic content will be injected here -->
-    </div>
+    <div class='main-controller'>
+        <!-- Main Content -->
+        <div class="container mt-5 text-center">
+            <h1 class="display-4">Trackify</h1>
+            <button id="spotify-login" class="btn btn-success mt-3">Login with Spotify</button>
+        </div>
     
-    <!-- Friends' Activity Section
-    <div id="friends-activity" class="container mt-5">
-        <h2 class="text-center">Friend Activity</h2>
-        <div class="friends-activity-container row justify-content-center mt-4">
-            
+        <!-- Greeting Section -->
+        <div id="greeting" class="container mt-5 p-4 text-green rounded shadow-lg" style="background: linear-gradient(135deg, #1DB954, #191414); display: none;">
+            <h2 class="text-center mb-4" style="font-weight: bold; font-size: 1.8rem;">🎵 Good <span id="greeting-time"></span>, <span id="username"></span>!</h2>
         </div>
-    </div> -->
-
-    <!-- Stats Section -->
-    <div id="stats" class="container mt-5" style="display:none;">
-        <h2 class="text-center">Your Top 5 Tracks</h2>
-        <div class="stats-container row justify-content-center mt-4"></div>
-    </div>
-
-    <!-- Minutes Listened Section -->
-    <div id="minutes" class="container mt-5">
-        <h2 class="text-center">Number of Minutes (50 tracks)</h2>
-        <div class="minutes-container row justify-content-center mt-4"></div>
-    </div>
-
-    <!-- Footer -->
-<footer class="mt-5 p-4 text-center" style="background: linear-gradient(135deg, #1DB954, #191414); color: white;">
-    <div class="container">
-        <div class="row align-items-center">
-            <!-- Branding Section -->
-            <div class="col-md-6 text-md-start mb-3 mb-md-0">
-                <div>
-                    <span>&copy; 2024 Trackify. All Rights Reserved.</span>
-                </div>
-                <div>
-                     <span>&copy;Made by Aaditya Sandeep Ardhapurkar</span>
-                </div>
-            </div>
-            <!-- Social Media Links -->
-            <div class="col-md-6 text-md-end">
-                
-                <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" class="text-green mx-2" style="text-decoration: none; color: #1DB954;">
-                    <i class="bi bi-instagram fs-4"></i>
-                </a>
-                <a href="https://spotify.com/" target="_blank" rel="noopener noreferrer" class="mx-3" style="text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="white" viewBox="0 0 24 24">
-                        <path d="M12 2.25C6.615 2.25 2.25 6.615 2.25 12S6.615 21.75 12 21.75 21.75 17.385 21.75 12 17.385 2.25 12 2.25zm4.318 15.027a.702.702 0 01-.973.192c-2.668-1.746-6.03-2.127-9.932-1.132a.703.703 0 11-.34-1.366c4.237-1.058 7.951-.627 10.963 1.287.33.216.42.654.192.973zm1.176-2.736a.878.878 0 01-1.218.24c-3.058-2.003-7.707-2.587-11.38-1.379a.878.878 0 01-.508-1.678c4.141-1.252 9.21-.594 12.668 1.59.41.268.529.817.24 1.217zm.096-2.87c-3.492-2.27-8.967-2.474-12.335-1.318a1.055 1.055 0 01-.615-2.014c3.805-1.162 9.847-.91 13.752 1.524a1.056 1.056 0 01-1.118 1.808z"/>
-                    </svg>
-                </a>
+    
+        <!-- Currently Playing Section -->
+        <div id="currently-playing" class="container mt-5 p-4 text-green rounded shadow-lg" style="background: linear-gradient(135deg, #1DB954, #191414); padding: 20px; box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);">
+            <h2 class="text-center mb-4" style="font-weight: bold; font-size: 1.8rem;">🎵 Currently Playing</h2>
+            <!-- Dynamic content will be injected here -->
+        </div>
+        
+        <!-- Friends' Activity Section
+        <div id="friends-activity" class="container mt-5">
+            <h2 class="text-center">Friend Activity</h2>
+            <div class="friends-activity-container row justify-content-center mt-4">
                 
             </div>
+        </div> -->
+    
+        <!-- Stats Section -->
+        <div id="stats" class="container mt-5" style="display:none;">
+            <h2 class="text-center">Your Top 5 Tracks</h2>
+            <div class="stats-container row justify-content-center mt-4"></div>
         </div>
+    
+        <!-- Minutes Listened Section -->
+        <div id="minutes" class="container mt-5">
+            <h2 class="text-center">Number of Minutes (50 tracks)</h2>
+            <div class="minutes-container row justify-content-center mt-4"></div>
+        </div>
+    
+        <!-- Footer -->
+         
+    <div class="footermain" >
+        <footer class="mt-5 p-4 text-center" style="background: linear-gradient(135deg, #1DB954, #191414); color: white;">
+            <div class="container">
+                <div class="row align-items-center">
+                    <!-- Branding Section -->
+                    <div class="col-md-6 text-md-start mb-3 mb-md-0">
+                        <div>
+                            <span>&copy; 2024 Trackify. All Rights Reserved.</span>
+                        </div>
+                        <div>
+                             <span>&copy;Made by Aaditya Sandeep Ardhapurkar</span>
+                        </div>
+                    </div>
+                    <!-- Social Media Links -->
+                    <div class="col-md-6 text-md-end">
+                        
+                        <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" class="text-green mx-2" style="text-decoration: none; color: #1DB954;">
+                            <i class="bi bi-instagram fs-4"></i>
+                        </a>
+                        <a href="https://spotify.com/" target="_blank" rel="noopener noreferrer" class="mx-3" style="text-decoration: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="white" viewBox="0 0 24 24">
+                                <path d="M12 2.25C6.615 2.25 2.25 6.615 2.25 12S6.615 21.75 12 21.75 21.75 17.385 21.75 12 17.385 2.25 12 2.25zm4.318 15.027a.702.702 0 01-.973.192c-2.668-1.746-6.03-2.127-9.932-1.132a.703.703 0 11-.34-1.366c4.237-1.058 7.951-.627 10.963 1.287.33.216.42.654.192.973zm1.176-2.736a.878.878 0 01-1.218.24c-3.058-2.003-7.707-2.587-11.38-1.379a.878.878 0 01-.508-1.678c4.141-1.252 9.21-.594 12.668 1.59.41.268.529.817.24 1.217zm.096-2.87c-3.492-2.27-8.967-2.474-12.335-1.318a1.055 1.055 0 01-.615-2.014c3.805-1.162 9.847-.91 13.752 1.524a1.056 1.056 0 01-1.118 1.808z"/>
+                            </svg>
+                        </a>
+                        
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
-</footer>
+    </div>
 
 
 
