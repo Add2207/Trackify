@@ -10,34 +10,94 @@ const minutesContainer = document.querySelector('.minutes-container');
 
 const CLIENT_ID = '26c78bd719744c07afb6233ec0d26c02';
 const REDIRECT_URI = 'https://add2207.github.io/Trackify/';
-const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}
-&response_type=token
-&redirect_uri=${encodeURIComponent(REDIRECT_URI)}
-&scope=user-top-read user-library-read user-read-recently-played user-read-playback-state user-read-currently-playing user-follow-read
-&show_dialog=true`; // Ensures login prompt always appears
+const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read user-read-recently-played user-read-playback-state user-read-currently-playing user-follow-read`;
 
-// Event listener for login button
+// Token management variables
+let accessToken = null;
+let refreshToken = null;
+let tokenExpiration = 0;
+
 spotifyLoginBtn.addEventListener('click', () => {
     window.location.href = AUTH_URL;
 });
 
-// Function to get and store access token
-function getAccessToken() {
+// Parse tokens from URL hash
+function parseTokensFromUrl() {
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
-    let token = params.get('access_token');
-
-    if (token) {
-        localStorage.setItem('spotify_access_token', token); // Store token
-        window.history.replaceState({}, document.title, "/Trackify/"); // Remove token from URL
-    } else {
-        token = localStorage.getItem('spotify_access_token'); // Retrieve token if available
+    
+    accessToken = params.get('access_token');
+    refreshToken = params.get('refresh_token');
+    const expiresIn = params.get('expires_in');
+    
+    if (accessToken && expiresIn) {
+        tokenExpiration = Date.now() + (expiresIn * 1000);
+        localStorage.setItem('refreshToken', refreshToken);
+        spotifyApi.setAccessToken(accessToken);
+        return true;
     }
-
-    return token;
+    return false;
 }
 
-// Display greeting based on time of day
+// Check if token is expired
+function isTokenExpired() {
+    return Date.now() >= tokenExpiration;
+}
+
+// Refresh the access token
+async function refreshAccessToken() {
+    if (!refreshToken) {
+        refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+            console.error('No refresh token available');
+            return false;
+        }
+    }
+
+    try {
+        const response = await fetch(`/refresh_token?refresh_token=${refreshToken}`);
+        const data = await response.json();
+        
+        if (data.access_token) {
+            accessToken = data.access_token;
+            tokenExpiration = Date.now() + (data.expires_in * 1000);
+            spotifyApi.setAccessToken(accessToken);
+            return true;
+        }
+    } catch (error) {
+        console.error('Error refreshing token:', error);
+    }
+    return false;
+}
+
+// Secure API call wrapper with token refresh
+async function makeApiCall(apiCall) {
+    try {
+        // Check if token is expired and refresh if needed
+        if (isTokenExpired()) {
+            const refreshed = await refreshAccessToken();
+            if (!refreshed) {
+                console.error('Failed to refresh token');
+                return null;
+            }
+        }
+        
+        return await apiCall();
+    } catch (error) {
+        console.error('API call error:', error);
+        
+        // If unauthorized, try refreshing token once
+        if (error.status === 401) {
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+                return await apiCall();
+            }
+        }
+        
+        throw error;
+    }
+}
+
 function displayGreeting(username) {
     const hours = new Date().getHours();
     let greeting = 'Morning';
@@ -50,15 +110,14 @@ function displayGreeting(username) {
     spotifyLoginBtn.style.display = 'none';
 }
 
-// Fetch user listening stats
-async function fetchStats(accessToken) {
-    spotifyApi.setAccessToken(accessToken);
-
+async function fetchStats() {
     try {
-        const response = await spotifyApi.getMyTopTracks({ limit: 5 });
-        const topTracks = response.items;
+        const response = await makeApiCall(() => spotifyApi.getMyTopTracks({ limit: 5 }));
+        if (!response) return;
 
+        const topTracks = response.items;
         statsContainer.innerHTML = ''; 
+        
         topTracks.forEach(track => {
             const trackElement = document.createElement('div');
             trackElement.classList.add('track');
@@ -75,14 +134,13 @@ async function fetchStats(accessToken) {
     }
 }
 
-// Fetch total listening minutes
-async function fetchMinutes(accessToken) {
-    spotifyApi.setAccessToken(accessToken);
-
+async function fetchMinutes() {
     try {
-        const response = await spotifyApi.getMyRecentlyPlayedTracks({ limit: 50 });
+        const response = await makeApiCall(() => spotifyApi.getMyRecentlyPlayedTracks({limit:50}));
+        if (!response) return;
+
         const lastPlayedSong = response.items[0];
-        const totalMinutes = response.items.reduce((sum, item) => sum + item.track.duration_ms / 60000, 0);
+        const totalMinutes = response.items.reduce((sum,item) => sum + item.track.duration_ms/60000, 0);
 
         minutesContainer.innerHTML = '';
         const minutesElement = document.createElement('div');
@@ -96,19 +154,17 @@ async function fetchMinutes(accessToken) {
 
         minutesSection.style.display = 'block';
     } catch (error) {
-        console.error('Error fetching minutes:', error);
+        console.error('error fetching minutes:', error);
         alert('Failed to fetch minutes listened. Please try again.');
     }
 }
 
-// Fetch currently playing track
-async function fetchCurrentlyPlaying(accessToken) {
-    spotifyApi.setAccessToken(accessToken);
-
+async function fetchCurrentlyPlaying() {
     try {
-        const response = await spotifyApi.getMyCurrentPlaybackState();
+        const response = await makeApiCall(() => spotifyApi.getMyCurrentPlaybackState());
+        if (!response) return;
 
-        if (!response || !response.is_playing || !response.item) {
+        if (!response.is_playing || !response.item) {
             document.getElementById('currently-playing').innerHTML = '<p>No track is currently playing.</p>';
             return;
         }
@@ -129,33 +185,47 @@ async function fetchCurrentlyPlaying(accessToken) {
                 </div>
             </div>
         `;
-
     } catch (error) {
         console.error('Error fetching current playback state:', error);
         alert('Failed to fetch playback state. Please try again.');
     }
 }
 
-// Retrieve stored access token
-const accessToken = getAccessToken();
-
-if (accessToken) {
-    spotifyApi.setAccessToken(accessToken);
-
-    spotifyApi.getMe()
-        .then(user => {
-            displayGreeting(user.display_name);
-            fetchStats(accessToken);
-            fetchMinutes(accessToken);
-            fetchCurrentlyPlaying(accessToken);
-            setInterval(() => fetchCurrentlyPlaying(accessToken), 10000);
-        })
-        .catch(error => {
-            console.error("Error fetching user data:", error);
-            alert("Session expired. Please log in again.");
-            localStorage.removeItem('spotify_access_token'); // Clear token on error
-            window.location.href = '/Trackify/'; // Redirect to login
-        });
-} else {
-    console.log("No access token found, please log in.");
+// Initialize the app
+async function initApp() {
+    if (parseTokensFromUrl()) {
+        try {
+            // Clear the URL hash after parsing tokens
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Fetch user data and display content
+            const user = await makeApiCall(() => spotifyApi.getMe());
+            if (user) {
+                displayGreeting(user.display_name);
+                await Promise.all([
+                    fetchStats(),
+                    fetchMinutes(),
+                    fetchCurrentlyPlaying()
+                ]);
+                
+                // Set up periodic refresh of currently playing track
+                setInterval(fetchCurrentlyPlaying, 10000);
+            }
+        } catch (error) {
+            console.error('Initialization error:', error);
+        }
+    } else {
+        // Check for existing refresh token
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        if (storedRefreshToken) {
+            refreshToken = storedRefreshToken;
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+                initApp();
+            }
+        }
+    }
 }
+
+// Start the app
+initApp();
