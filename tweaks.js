@@ -30,6 +30,11 @@ function parseTokensFromUrl() {
     refreshToken = params.get('refresh_token');
     const expiresIn = params.get('expires_in');
     
+    // DEBUG: Log the tokens we received
+    console.log('Access Token:', accessToken);
+    console.log('Refresh Token:', refreshToken);
+    console.log('Token Expiration:', new Date(tokenExpiration));
+    
     if (accessToken && expiresIn) {
         tokenExpiration = Date.now() + (expiresIn * 1000);
         localStorage.setItem('refreshToken', refreshToken);
@@ -193,6 +198,7 @@ async function fetchCurrentlyPlaying() {
 
 // Initialize the app
 async function initApp() {
+    // First try to parse tokens from URL (new login)
     if (parseTokensFromUrl()) {
         try {
             // Clear the URL hash after parsing tokens
@@ -208,21 +214,27 @@ async function initApp() {
                     fetchCurrentlyPlaying()
                 ]);
                 
-                // Set up periodic refresh of currently playing track
                 setInterval(fetchCurrentlyPlaying, 10000);
             }
         } catch (error) {
             console.error('Initialization error:', error);
+            // Show login button if error occurs
+            spotifyLoginBtn.style.display = 'block';
         }
-    } else {
-        // Check for existing refresh token
+    } 
+    // Check for existing refresh token (returning user)
+    else {
         const storedRefreshToken = localStorage.getItem('refreshToken');
         if (storedRefreshToken) {
             refreshToken = storedRefreshToken;
             const refreshed = await refreshAccessToken();
             if (refreshed) {
-                initApp();
+                initApp(); // Retry initialization with new token
+            } else {
+                spotifyLoginBtn.style.display = 'block';
             }
+        } else {
+            spotifyLoginBtn.style.display = 'block';
         }
     }
 }
