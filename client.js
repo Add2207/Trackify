@@ -92,7 +92,9 @@ async function fetchCurrentlyPlaying(accessToken) {
         const response = await spotifyApi.getMyCurrentPlaybackState();
 
         if (!response || !response.is_playing || !response.item) {
-            document.getElementById('currently-playing').innerHTML = '<p>No track is currently playing.</p>';
+            document.getElementById('currently-playing').innerHTML = `
+                <p>No track is currently playing. Start playing something on Spotify to see details here.</p>
+            `;
             return;
         }
 
@@ -114,8 +116,11 @@ async function fetchCurrentlyPlaying(accessToken) {
         `;
 
     } catch (error) {
+        // Log the error and show a fallback message in the UI
         console.error('Error fetching current playback state:', error);
-        alert('Failed to fetch playback state. Please try again.');
+        document.getElementById('currently-playing').innerHTML = `
+            <p>Failed to fetch playback state. Please ensure you are logged in and playing something on Spotify.</p>
+        `;
     }
 }
 
