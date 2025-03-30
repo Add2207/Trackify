@@ -65,6 +65,14 @@ async function fetchMinutes(accessToken){
 
     try {
         const response = await spotifyApi.getMyRecentlyPlayedTracks({limit:50});
+
+        if (!response || !response.is_playing || !response.item) {
+            document.getElementById('minutes').innerHTML = `
+                <p>data not available.</p>
+            `;
+            return;
+        }
+        
         const lastPlayedSong = response.items[0];
         const totalMinutes = response.items.reduce((sum,item) => sum + item.track.duration_ms/60000, 0);
 
@@ -81,7 +89,9 @@ async function fetchMinutes(accessToken){
         minutesSection.style.display = 'block';
     } catch (error) {
         console.error('error fetching minutes:', error);
-        alert('Failed to fetch minutes listened. Please try again.');
+        document.getElementById('minutes').innerHTML = `
+            <p>Failed to fetch minutes listened. Please ensure you are logged in and playing something on Spotify.</p>
+        `;
     }
 }
 
