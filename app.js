@@ -4,7 +4,7 @@ const path = require('path');
 const axios = require('axios');
 const SpotifyWebApi = require('spotify-web-api-node');
 
-const CLIENT_ID = '26c78bd719744c07afb6233ec0d26c02';
+const CLIENT_ID = 'd245afe0c0c8488bb51c2c9179b9c67a';
 const REDIRECT_URI = 'https://add2207.github.io/Trackify/'; // Update this to your GitHub Pages URL
 const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read`;
 const spotifyApi = new SpotifyWebApi({
