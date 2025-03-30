@@ -1,49 +1,100 @@
 const express = require('express');
-const app = express();
 const path = require('path');
-const axios = require('axios');
 const SpotifyWebApi = require('spotify-web-api-node');
+const axios = require('axios');
 
+const app = express();
+
+// Configuration
 const CLIENT_ID = 'd245afe0c0c8488bb51c2c9179b9c67a';
-const REDIRECT_URI = 'https://add2207.github.io/Trackify/'; // Update this to your GitHub Pages URL
-const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read`;
+const REDIRECT_URI = 'https://add2207.github.io/Trackify/';
+const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read user-read-recently-played user-read-playback-state user-read-currently-playing user-follow-read`;
+
+// Initialize Spotify API
 const spotifyApi = new SpotifyWebApi({
-    clientId: CLIENT_ID,
-    redirectUri: REDIRECT_URI,
+  clientId: CLIENT_ID,
+  redirectUri: REDIRECT_URI
 });
 
-app.use(express.static(path.join(__dirname, 'public'))); // Serve static files from 'public' directory
+// Middleware
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Route to serve the login page (index.html)
+// Routes
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// This will be where the client is redirected after Spotify login
-app.get('/callback', (req, res) => {
-    const accessToken = req.query.access_token;  // Access token in the URL fragment
-    res.redirect(`/?access_token=${accessToken}`);
+app.get('/auth/spotify', (req, res) => {
+  res.redirect(AUTH_URL);
 });
 
-app.get('/playback-data', async (req, res) => {
-    const accessToken = req.query.access_token;  // Access token in the URL fragment
+// API endpoints
+app.get('/api/me', async (req, res) => {
+  try {
+    const accessToken = req.query.access_token;
     if (!accessToken) {
-        return res.status(400).json({ error: 'No access token found' });
+      return res.status(400).json({ error: 'Access token required' });
     }
 
-    try {
-        spotifyApi.setAccessToken(accessToken);
-        const response = await spotifyApi.getMyRecentlyPlayedTracks();
-        const playbackData = response.body.items;
-        res.json({ items: playbackData });
-    } catch (error) {
-        console.error('Error fetching playback data:', error);
-        res.status(500).json({ error: 'Failed to fetch playback data' });
-    }
+    spotifyApi.setAccessToken(accessToken);
+    const user = await spotifyApi.getMe();
+    res.json(user.body);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
 });
 
-// Use process.env.PORT if it's set (GitHub Pages environment variable)
+app.get('/api/top-tracks', async (req, res) => {
+  try {
+    const accessToken = req.query.access_token;
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Access token required' });
+    }
+
+    spotifyApi.setAccessToken(accessToken);
+    const topTracks = await spotifyApi.getMyTopTracks({ limit: 5 });
+    res.json(topTracks.body);
+  } catch (error) {
+    console.error('Error fetching top tracks:', error);
+    res.status(500).json({ error: 'Failed to fetch top tracks' });
+  }
+});
+
+app.get('/api/recently-played', async (req, res) => {
+  try {
+    const accessToken = req.query.access_token;
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Access token required' });
+    }
+
+    spotifyApi.setAccessToken(accessToken);
+    const recentlyPlayed = await spotifyApi.getMyRecentlyPlayedTracks({ limit: 50 });
+    res.json(recentlyPlayed.body);
+  } catch (error) {
+    console.error('Error fetching recently played tracks:', error);
+    res.status(500).json({ error: 'Failed to fetch recently played tracks' });
+  }
+});
+
+app.get('/api/currently-playing', async (req, res) => {
+  try {
+    const accessToken = req.query.access_token;
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Access token required' });
+    }
+
+    spotifyApi.setAccessToken(accessToken);
+    const playbackState = await spotifyApi.getMyCurrentPlaybackState();
+    res.json(playbackState.body);
+  } catch (error) {
+    console.error('Error fetching playback state:', error);
+    res.status(500).json({ error: 'Failed to fetch playback state' });
+  }
+});
+
+// Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
