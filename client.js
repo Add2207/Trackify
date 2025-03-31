@@ -1,151 +1,93 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const spotifyLoginBtn = document.getElementById('spotify-login');
-  const greetingDiv = document.getElementById('greeting');
-  const usernameElem = document.getElementById('username');
-  const greetingTimeElem = document.getElementById('greeting-time');
-  const statsSection = document.getElementById('stats');
-  const statsContainer = document.querySelector('.stats-container');
-  const minutesSection = document.getElementById('minutes');
-  const minutesContainer = document.querySelector('.minutes-container');
-  const currentlyPlayingDiv = document.getElementById('currently-playing');
+const CLIENT_ID = 'your_spotify_client_id';
+const REDIRECT_URI = 'https://add2207.github.io/Trackify/';
+const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
+const RESPONSE_TYPE = 'token';
 
-  const CLIENT_ID = 'd245afe0c0c8488bb51c2c9179b9c67a';
-  const REDIRECT_URI = 'https://add2207.github.io/Trackify/';
-  const AUTH_URL = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=user-top-read user-library-read user-read-recently-played user-read-playback-state user-read-currently-playing user-follow-read`;
-
-  // Check for access token in URL
-  const accessToken = getAccessTokenFromUrl();
-  
-  if (accessToken) {
-    initializeApp(accessToken);
-  } else {
-    spotifyLoginBtn.style.display = 'block';
-    spotifyLoginBtn.addEventListener('click', () => {
-      window.location.href = AUTH_URL;
-    });
-  }
-
-  function getAccessTokenFromUrl() {
+// Get token from URL after login
+function getAccessToken() {
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     return params.get('access_token');
-  }
+}
 
-  async function initializeApp(accessToken) {
+// Redirect to Spotify Login
+function login() {
+    const authUrl = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=${RESPONSE_TYPE}&scope=user-read-playback-state%20user-read-recently-played%20user-top-read`;
+    window.location.href = authUrl;
+}
+
+// Extract and store token
+const accessToken = getAccessToken();
+
+if (accessToken) {
+    document.getElementById('spotify-login').style.display = 'none';
+    loadUserData(accessToken);
+} else {
+    document.getElementById('spotify-login').addEventListener('click', login);
+}
+
+// Fetch User Data from Spotify
+async function loadUserData(token) {
     try {
-      // Fetch user data
-      const user = await fetchData('/api/me', accessToken);
-      displayGreeting(user.display_name);
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        // Get User Profile
+        const userResponse = await axios.get('https://api.spotify.com/v1/me', { headers });
+        document.getElementById('username').innerText = userResponse.data.display_name;
 
-      // Fetch and display all data
-      await displayTopTracks(accessToken);
-      await displayRecentlyPlayed(accessToken);
-      await displayCurrentlyPlaying(accessToken);
+        // Get Recently Played Tracks
+        const recentResponse = await axios.get('https://api.spotify.com/v1/me/player/recently-played?limit=1', { headers });
+        displayCurrentlyPlaying(recentResponse.data.items[0]);
 
-      // Set up refresh for currently playing track
-      setInterval(() => displayCurrentlyPlaying(accessToken), 10000);
+        // Get Top Tracks
+        const topTracksResponse = await axios.get('https://api.spotify.com/v1/me/top/tracks?limit=5', { headers });
+        displayTopTracks(topTracksResponse.data.items);
+
+        // Get Minutes Listened (Last 50 Tracks)
+        const recent50Response = await axios.get('https://api.spotify.com/v1/me/player/recently-played?limit=50', { headers });
+        displayMinutesListened(recent50Response.data.items);
+
     } catch (error) {
-      console.error('Error initializing app:', error);
+        console.error('Error loading data:', error);
     }
-  }
+}
 
-  async function fetchData(endpoint, accessToken) {
-    const response = await fetch(`${endpoint}?access_token=${accessToken}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${endpoint}`);
-    }
-    return await response.json();
-  }
-
-  function displayGreeting(username) {
-    const hours = new Date().getHours();
-    let greeting = 'Morning';
-    if (hours >= 12 && hours < 18) greeting = 'Afternoon';
-    else if (hours >= 18) greeting = 'Evening';
-    
-    greetingTimeElem.textContent = greeting;
-    usernameElem.textContent = username;
-    greetingDiv.style.display = 'block';
-    spotifyLoginBtn.style.display = 'none';
-  }
-
-  async function displayTopTracks(accessToken) {
-    try {
-      const { items: topTracks } = await fetchData('/api/top-tracks', accessToken);
-
-      statsContainer.innerHTML = ''; 
-      topTracks.forEach(track => {
-        const trackElement = document.createElement('div');
-        trackElement.classList.add('track');
-        trackElement.innerHTML = `
-          <img src="${track.album.images[0].url}" alt="${track.name} cover art" class="cover-art">
-          <p><strong>${track.name}</strong> by ${track.artists.map(artist => artist.name).join(', ')}</p>
-        `;
-        statsContainer.appendChild(trackElement);
-      });
-
-      statsSection.style.display = 'block';
-    } catch (error) {
-      console.error('Error displaying top tracks:', error);
-      statsContainer.innerHTML = '<p>Failed to load top tracks</p>';
-    }
-  }
-
-  async function displayRecentlyPlayed(accessToken) {
-    try {
-      const { items } = await fetchData('/api/recently-played', accessToken);
-      const totalMinutes = items.reduce((sum, item) => sum + item.track.duration_ms / 60000, 0);
-      const lastPlayedSong = items[0];
-
-      minutesContainer.innerHTML = '';
-      const minutesElement = document.createElement('div');
-      minutesElement.classList.add('minutes');
-      minutesElement.innerHTML = `
-        <p>Total minutes listened: ${Math.round(totalMinutes)} minutes</p>
-        <img src="${lastPlayedSong.track.album.images[0].url}" alt="${lastPlayedSong.track.name} cover art" class="cover-art">
-        <p>Last played song: "${lastPlayedSong.track.name}" by ${lastPlayedSong.track.artists.map(artist => artist.name).join(', ')}</p>
-      `;
-      minutesContainer.appendChild(minutesElement);
-
-      minutesSection.style.display = 'block';
-    } catch (error) {
-      console.error('Error displaying recently played:', error);
-      minutesContainer.innerHTML = '<p>Failed to load listening history</p>';
-    }
-  }
-
-  async function displayCurrentlyPlaying(accessToken) {
-    try {
-      const playbackState = await fetchData('/api/currently-playing', accessToken);
-
-      if (!playbackState || !playbackState.is_playing || !playbackState.item) {
-        currentlyPlayingDiv.innerHTML = `
-          <p>No track is currently playing. Start playing something on Spotify to see details here.</p>
-        `;
+// Display Currently Playing
+function displayCurrentlyPlaying(track) {
+    if (!track) {
+        document.getElementById('currently-playing').innerHTML = '<p>No track is currently playing.</p>';
         return;
-      }
-
-      const track = playbackState.item;
-      const progressMs = playbackState.progress_ms;
-      const durationMs = track.duration_ms;
-      const elapsedMinutes = Math.floor(progressMs / 60000);
-      const elapsedSeconds = Math.floor((progressMs % 60000) / 1000);
-      const formattedProgress = `${elapsedMinutes}:${elapsedSeconds.toString().padStart(2, '0')}`;
-
-      currentlyPlayingDiv.innerHTML = `
-        <div class="d-flex align-items-center">
-          <img src="${track.album.images[0].url}" alt="${track.name} cover art" class="cover-art me-3">
-          <div class="track-details">
-            <p><strong>${track.name}</strong> by ${track.artists.map(artist => artist.name).join(', ')}</p>
-            <p>🎧 Playing for: ${formattedProgress} / ${(durationMs / 60000).toFixed(0)} minutes</p>
-          </div>
-        </div>
-      `;
-    } catch (error) {
-      console.error('Error displaying currently playing:', error);
-      currentlyPlayingDiv.innerHTML = `
-        <p>Failed to fetch playback state. Please ensure you are playing something on Spotify.</p>
-      `;
     }
-  }
-});
+
+    const trackInfo = `
+        <div class="d-flex align-items-center">
+            <img src="${track.track.album.images[0].url}" alt="${track.track.name} cover" class="cover-art me-3">
+            <div class="track-details">
+                <p><strong>${track.track.name}</strong> by ${track.track.artists.map(a => a.name).join(', ')}</p>
+            </div>
+        </div>
+    `;
+    document.getElementById('currently-playing').innerHTML = trackInfo;
+}
+
+// Display Top Tracks
+function displayTopTracks(tracks) {
+    const statsContainer = document.querySelector('#stats .stats-container');
+    statsContainer.innerHTML = tracks
+        .map(track => `
+            <div class="track">
+                <strong>${track.name}</strong> by ${track.artists.map(a => a.name).join(', ')}
+            </div>
+        `)
+        .join('');
+    document.getElementById('stats').style.display = 'block';
+}
+
+// Display Minutes Listened for Last 50 Tracks
+function displayMinutesListened(tracks) {
+    const totalMinutes = tracks.reduce((sum, track) => sum + track.track.duration_ms, 0) / 60000;
+    document.querySelector('#minutes .minutes-container').innerHTML = `
+        <p>Total Minutes: <strong>${Math.round(totalMinutes)} minutes</strong></p>
+    `;
+    document.getElementById('minutes').style.display = 'block';
+}
