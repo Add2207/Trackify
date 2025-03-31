@@ -110,13 +110,16 @@ async function loadCurrentlyPlaying(headers) {
     }
 }
 
-// Display Top Tracks
+// Display Top Tracks with Album Cover
 function displayTopTracks(tracks) {
     const statsContainer = document.querySelector('#stats .stats-container');
     statsContainer.innerHTML = tracks
         .map(track => `
-            <div class="track">
-                <strong>${track.name}</strong> by ${track.artists.map(a => a.name).join(', ')}
+            <div class="d-flex align-items-center track-item">
+                <img src="${track.album.images[0].url}" alt="${track.name} cover" class="cover-art me-3">
+                <div class="track-details">
+                    <p><strong>${track.name}</strong> by ${track.artists.map(a => a.name).join(', ')}</p>
+                </div>
             </div>
         `)
         .join('');
