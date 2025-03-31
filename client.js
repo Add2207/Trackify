@@ -1,4 +1,4 @@
-const CLIENT_ID = 'your_spotify_client_id';
+const CLIENT_ID = '26c78bd719744c07afb6233ec0d26c02';
 const REDIRECT_URI = 'https://add2207.github.io/Trackify/';
 const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
 const RESPONSE_TYPE = 'token';
